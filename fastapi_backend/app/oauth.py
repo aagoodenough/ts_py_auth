@@ -52,6 +52,21 @@ async def get_or_create_oauth_user(
     if user:
         return user
     
+    stmt = select(User).where(User.email == email)
+    result = await session.execute(stmt)
+    existing_user = result.scalar_one_or_none()
+    
+    if existing_user:
+        if provider == "google":
+            existing_user.google_id = provider_id
+        elif provider == "github":
+            existing_user.github_id = provider_id
+        existing_user.is_oauth_user = True
+        existing_user.oauth_email = email
+        await session.commit()
+        await session.refresh(existing_user)
+        return existing_user
+    
     user_id = uuid4()
     user_data = {
         "id": user_id,
