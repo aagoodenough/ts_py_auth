@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 from .config import settings
 from .database import create_db_and_tables
@@ -11,6 +12,11 @@ app = FastAPI(
     title="Auth API",
     description="Authentication API with OAuth support",
     openapi_url=settings.OPENAPI_URL,
+)
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.ACCESS_SECRET_KEY,
 )
 
 app.add_middleware(
