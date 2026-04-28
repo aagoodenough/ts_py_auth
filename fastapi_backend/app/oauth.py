@@ -105,8 +105,8 @@ async def google_oauth_redirect(request: Request):
 @router.get("/google/callback")
 async def google_oauth_callback(
     code: str,
-    state: str,
-    request: Request,
+    state: str | None = None,
+    request: Request = None,
     session: AsyncSession = Depends(get_async_session),
 ):
     try:
@@ -182,7 +182,7 @@ async def github_oauth_redirect(request: Request):
 @router.get("/github/callback")
 async def github_oauth_callback(
     code: str,
-    state: str,
+    state: str | None = None,
     session: AsyncSession = Depends(get_async_session),
 ):
     try:
