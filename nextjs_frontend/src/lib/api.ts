@@ -51,12 +51,13 @@ class AuthAPI {
       headers,
     });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(error.detail || 'Request failed');
+    const data = await response.json().catch(() => ({ detail: 'Unknown error' }));
+    
+    if (!response.ok || data.error) {
+      throw new Error(data.error || data.detail || 'Request failed');
     }
 
-    return response.json();
+    return data;
   }
 
   async register(email: string, password: string): Promise<AuthResponse> {

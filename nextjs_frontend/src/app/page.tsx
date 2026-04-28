@@ -31,8 +31,8 @@ export default function LoginPage() {
     try {
       const { authorization_url } = await authAPI.googleLogin();
       window.location.href = authorization_url;
-    } catch (err) {
-      setError('Google login is not configured');
+    } catch (err: any) {
+      setError(err?.message || 'Google login is not configured');
     }
   };
 
@@ -40,8 +40,8 @@ export default function LoginPage() {
     try {
       const { authorization_url } = await authAPI.githubLogin();
       window.location.href = authorization_url;
-    } catch (err) {
-      setError('GitHub login is not configured');
+    } catch (err: any) {
+      setError(err?.message || 'GitHub login is not configured');
     }
   };
 

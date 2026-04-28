@@ -20,8 +20,8 @@ function GitHubCallbackContent() {
       try {
         await authAPI.handleOAuthCallback('github', code);
         router.push('/dashboard');
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Authentication failed');
+      } catch (err: any) {
+        setError(err?.message || 'Authentication failed');
       }
     };
 

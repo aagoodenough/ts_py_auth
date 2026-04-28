@@ -20,8 +20,8 @@ function GoogleCallbackContent() {
       try {
         await authAPI.handleOAuthCallback('google', code);
         router.push('/dashboard');
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Authentication failed');
+      } catch (err: any) {
+        setError(err?.message || 'Authentication failed');
       }
     };
 
