@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { authAPI } from '@/lib/api';
 
 function GitHubCallbackContent() {
   const router = useRouter();
@@ -18,8 +17,16 @@ function GitHubCallbackContent() {
       }
 
       try {
-        await authAPI.handleOAuthCallback('github', code);
-        router.push('/dashboard');
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${API_URL}/auth/oauth/github/callback?code=${code}`);
+        const data = await response.json();
+
+        if (data.access_token) {
+          localStorage.setItem('auth_token', data.access_token);
+          router.push('/dashboard');
+        } else {
+          setError(data.error || 'Authentication failed');
+        }
       } catch (err: any) {
         setError(err?.message || 'Authentication failed');
       }
