@@ -109,47 +109,53 @@ async def google_oauth_callback(
     request: Request,
     session: AsyncSession = Depends(get_async_session),
 ):
-    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
-        return {"error": "Google OAuth not configured"}
-    
-    import httpx
-    import urllib.parse
-    
-    token_data = {
-        "client_id": GOOGLE_CLIENT_ID,
-        "client_secret": GOOGLE_CLIENT_SECRET,
-        "code": code,
-        "grant_type": "authorization_code",
-        "redirect_uri": f"{settings.FRONTEND_URL}/auth/google/callback",
-    }
-    
-    async with httpx.AsyncClient() as client:
-        token_response = await client.post(GOOGLE_TOKEN_URL, data=token_data)
-        tokens = token_response.json()
+    try:
+        if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+            return {"error": "Google OAuth not configured"}
         
-        access_token = tokens.get("access_token")
+        import httpx
+        import urllib.parse
         
-        user_response = await client.get(
-            GOOGLE_USERINFO_URL,
-            headers={"Authorization": f"Bearer {access_token}"}
+        token_data = {
+            "client_id": GOOGLE_CLIENT_ID,
+            "client_secret": GOOGLE_CLIENT_SECRET,
+            "code": code,
+            "grant_type": "authorization_code",
+            "redirect_uri": f"{settings.FRONTEND_URL}/auth/google/callback",
+        }
+        
+        async with httpx.AsyncClient() as client:
+            token_response = await client.post(GOOGLE_TOKEN_URL, data=token_data)
+            tokens = token_response.json()
+            
+            if "error" in tokens:
+                return {"error": tokens.get("error_description", tokens.get("error", "Token exchange failed"))}
+            
+            access_token = tokens.get("access_token")
+            
+            user_response = await client.get(
+                GOOGLE_USERINFO_URL,
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            user_info = user_response.json()
+        
+        user = await get_or_create_oauth_user(
+            session=session,
+            provider="google",
+            provider_id=user_info.get("id", ""),
+            email=user_info.get("email", ""),
+            name=user_info.get("name"),
         )
-        user_info = user_response.json()
-    
-    user = await get_or_create_oauth_user(
-        session=session,
-        provider="google",
-        provider_id=user_info.get("id", ""),
-        email=user_info.get("email", ""),
-        name=user_info.get("name"),
-    )
-    
-    jwt_token = await create_jwt_token(user)
-    
-    return {
-        "access_token": jwt_token,
-        "token_type": "bearer",
-        "user": UserRead.model_validate(user),
-    }
+        
+        jwt_token = await create_jwt_token(user)
+        
+        return {
+            "access_token": jwt_token,
+            "token_type": "bearer",
+            "user": UserRead.model_validate(user),
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 
 @router.get("/github")
@@ -179,52 +185,58 @@ async def github_oauth_callback(
     state: str,
     session: AsyncSession = Depends(get_async_session),
 ):
-    if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET:
-        return {"error": "GitHub OAuth not configured"}
-    
-    import httpx
-    import urllib.parse
-    
-    token_data = {
-        "client_id": GITHUB_CLIENT_ID,
-        "client_secret": GITHUB_CLIENT_SECRET,
-        "code": code,
-    }
-    
-    headers = {"Accept": "application/json"}
-    
-    async with httpx.AsyncClient() as client:
-        token_response = await client.post(GITHUB_TOKEN_URL, data=token_data, headers=headers)
-        tokens = token_response.json()
+    try:
+        if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET:
+            return {"error": "GitHub OAuth not configured"}
         
-        access_token = tokens.get("access_token")
+        import httpx
+        import urllib.parse
         
-        user_response = await client.get(
-            GITHUB_USERINFO_URL,
-            headers={"Authorization": f"Bearer {access_token}"}
+        token_data = {
+            "client_id": GITHUB_CLIENT_ID,
+            "client_secret": GITHUB_CLIENT_SECRET,
+            "code": code,
+        }
+        
+        headers = {"Accept": "application/json"}
+        
+        async with httpx.AsyncClient() as client:
+            token_response = await client.post(GITHUB_TOKEN_URL, data=token_data, headers=headers)
+            tokens = token_response.json()
+            
+            if "error" in tokens:
+                return {"error": tokens.get("error_description", tokens.get("error", "Token exchange failed"))}
+            
+            access_token = tokens.get("access_token")
+            
+            user_response = await client.get(
+                GITHUB_USERINFO_URL,
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            user_info = user_response.json()
+            
+            emails_response = await client.get(
+                "https://api.github.com/user/emails",
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            emails = emails_response.json()
+            
+            primary_email = next((e["email"] for e in emails if e.get("primary")), user_info.get("email"))
+        
+        user = await get_or_create_oauth_user(
+            session=session,
+            provider="github",
+            provider_id=str(user_info.get("id", "")),
+            email=primary_email or "unknown@github.local",
+            name=user_info.get("name") or user_info.get("login"),
         )
-        user_info = user_response.json()
         
-        emails_response = await client.get(
-            "https://api.github.com/user/emails",
-            headers={"Authorization": f"Bearer {access_token}"}
-        )
-        emails = emails_response.json()
+        jwt_token = await create_jwt_token(user)
         
-        primary_email = next((e["email"] for e in emails if e.get("primary")), user_info.get("email"))
-    
-    user = await get_or_create_oauth_user(
-        session=session,
-        provider="github",
-        provider_id=str(user_info.get("id", "")),
-        email=primary_email or "unknown@github.local",
-        name=user_info.get("name") or user_info.get("login"),
-    )
-    
-    jwt_token = await create_jwt_token(user)
-    
-    return {
-        "access_token": jwt_token,
-        "token_type": "bearer",
-        "user": UserRead.model_validate(user),
-    }
+        return {
+            "access_token": jwt_token,
+            "token_type": "bearer",
+            "user": UserRead.model_validate(user),
+        }
+    except Exception as e:
+        return {"error": str(e)}
