@@ -18,7 +18,6 @@ export default function RootLayout({
           src="https://js.hcaptcha.com/1/api.js" 
           async 
           defer
-          onLoad={() => console.log('hCaptcha loaded')}
         ></script>
       </head>
       <body>{children}</body>
