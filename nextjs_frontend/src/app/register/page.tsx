@@ -8,8 +8,9 @@ import { authAPI } from '@/lib/api';
 declare global {
   interface Window {
     grecaptcha: {
-      execute: (siteKey: string, options: { action: string }) => Promise<string>;
-      render: (elementId: string, options: { sitekey: string; theme: string }) => number;
+      render: (elementId: string, options: { sitekey: string; theme: string; callback?: Function; 'expired-callback'?: Function; 'error-callback'?: Function }) => number;
+      getResponse: (widgetId: number) => string;
+      reset: (widgetId?: number) => void;
     };
   }
 }
@@ -25,10 +26,11 @@ export default function RegisterPage() {
   useEffect(() => {
     const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '';
     if (siteKey && window.grecaptcha) {
-      window.grecaptcha.render('recaptcha-register', {
+      const widgetId = window.grecaptcha.render('recaptcha-register', {
         sitekey: siteKey,
         theme: 'light',
       });
+      (window as any).__recaptchaRegisterWidgetId = widgetId;
     }
   }, []);
 
@@ -49,8 +51,13 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '';
-      const recaptchaToken = await window.grecaptcha.execute(siteKey, { action: 'register' });
+      const widgetId = (window as any).__recaptchaRegisterWidgetId;
+      const recaptchaToken = window.grecaptcha.getResponse(widgetId);
+      if (!recaptchaToken) {
+        setError('Please complete the reCAPTCHA');
+        setLoading(false);
+        return;
+      }
       await authAPI.register(email, password, recaptchaToken);
       router.push('/dashboard');
     } catch (err) {

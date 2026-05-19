@@ -180,3 +180,14 @@ button:disabled {
 .logout-btn:hover {
   background: #b91c1c;
 }
+
+.g-recaptcha-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.g-recaptcha-wrapper > div {
+  transform: scale(0.9);
+  transform-origin: left top;
+}

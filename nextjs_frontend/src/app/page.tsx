@@ -8,8 +8,9 @@ import { authAPI } from '@/lib/api';
 declare global {
   interface Window {
     grecaptcha: {
-      execute: (siteKey: string, options: { action: string }) => Promise<string>;
-      render: (elementId: string, options: { sitekey: string; theme: string }) => number;
+      render: (elementId: string, options: { sitekey: string; theme: string; callback?: Function; 'expired-callback'?: Function; 'error-callback'?: Function }) => number;
+      getResponse: (widgetId: number) => string;
+      reset: (widgetId?: number) => void;
     };
   }
 }
@@ -24,10 +25,11 @@ export default function LoginPage() {
   useEffect(() => {
     const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '';
     if (siteKey && window.grecaptcha) {
-      window.grecaptcha.render('recaptcha-login', {
+      const widgetId = window.grecaptcha.render('recaptcha-login', {
         sitekey: siteKey,
         theme: 'light',
       });
+      (window as any).__recaptchaWidgetId = widgetId;
     }
   }, []);
 
@@ -37,8 +39,13 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '';
-      const recaptchaToken = await window.grecaptcha.execute(siteKey, { action: 'login' });
+      const widgetId = (window as any).__recaptchaWidgetId;
+      const recaptchaToken = window.grecaptcha.getResponse(widgetId);
+      if (!recaptchaToken) {
+        setError('Please complete the reCAPTCHA');
+        setLoading(false);
+        return;
+      }
       await authAPI.login(email, password, recaptchaToken);
       router.push('/dashboard');
     } catch (err) {
