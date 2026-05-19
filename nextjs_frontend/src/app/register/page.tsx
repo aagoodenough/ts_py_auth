@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI } from '@/lib/api';
@@ -12,6 +12,17 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [hcaptchaReady, setHcaptchaReady] = useState(false);
+
+  useEffect(() => {
+    const checkHcaptcha = setInterval(() => {
+      if ((window as any).hcaptcha) {
+        setHcaptchaReady(true);
+        clearInterval(checkHcaptcha);
+      }
+    }, 100);
+    return () => clearInterval(checkHcaptcha);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +39,12 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
+
+    if (!hcaptchaReady || !(window as any).hcaptcha) {
+      setError('hCaptcha is loading, please wait...');
+      setLoading(false);
+      return;
+    }
 
     const hcaptchaToken = (window as any).hcaptcha?.getResponse?.();
     if (!hcaptchaToken) {
