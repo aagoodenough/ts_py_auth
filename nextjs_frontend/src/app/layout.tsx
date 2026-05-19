@@ -14,20 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <script
-          src="https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoad&render=explicit"
-          async
-          defer
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.onRecaptchaLoad = function() {
-                console.log('reCAPTCHA loaded');
-              };
-            `,
-          }}
-        />
+        <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
       </head>
       <body>{children}</body>
     </html>

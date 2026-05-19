@@ -1,19 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI } from '@/lib/api';
-
-declare global {
-  interface Window {
-    grecaptcha: {
-      render: (elementId: string, options: { sitekey: string; theme: string; callback?: Function; 'expired-callback'?: Function; 'error-callback'?: Function }) => number;
-      getResponse: (widgetId: number) => string;
-      reset: (widgetId?: number) => void;
-    };
-  }
-}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,47 +12,23 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '';
-    const initRecaptcha = () => {
-      if (siteKey && window.grecaptcha && !window.grecaptcha.render) {
-        setTimeout(initRecaptcha, 100);
-        return;
-      }
-      if (siteKey && window.grecaptcha && window.grecaptcha.render) {
-        const container = document.getElementById('recaptcha-login');
-        if (container && !container.hasChildNodes()) {
-          const widgetId = window.grecaptcha.render('recaptcha-login', {
-            sitekey: siteKey,
-            theme: 'light',
-          });
-          (window as any).__recaptchaWidgetId = widgetId;
-        }
-      }
-    };
-    if (window.grecaptcha) {
-      initRecaptcha();
-    } else {
-      window.onload = initRecaptcha;
-    }
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
+    const hcaptchaToken = (window as any).hcaptcha?.getResponse?.();
+    if (!hcaptchaToken) {
+      setError('Please complete the hCaptcha');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const widgetId = (window as any).__recaptchaWidgetId;
-      const recaptchaToken = window.grecaptcha.getResponse(widgetId);
-      if (!recaptchaToken) {
-        setError('Please complete the reCAPTCHA');
-        setLoading(false);
-        return;
-      }
-      await authAPI.login(email, password, recaptchaToken);
+      await authAPI.login(email, password, hcaptchaToken);
       router.push('/dashboard');
     } catch (err) {
+      (window as any).hcaptcha?.reset();
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
@@ -115,8 +81,8 @@ export default function LoginPage() {
             />
           </div>
 
-          <div className="g-recaptcha-wrapper">
-            <div id="recaptcha-login"></div>
+          <div className="h-captcha-wrapper">
+            <div className="h-captcha" data-sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY}></div>
           </div>
 
           {error && <p className="error">{error}</p>}

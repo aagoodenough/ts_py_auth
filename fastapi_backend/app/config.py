@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_ID: str | None = None
     GITHUB_CLIENT_SECRET: str | None = None
 
-    RECAPTCHA_SECRET_KEY: str | None = None
+    HCAPTCHA_SECRET_KEY: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"

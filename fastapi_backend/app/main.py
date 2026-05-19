@@ -76,12 +76,12 @@ class RecaptchaVerifyRequest(BaseModel):
     token: str
 
 
-async def verify_recaptcha_token(token: str) -> bool:
+async def verify_hcaptcha_token(token: str) -> bool:
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            "https://www.google.com/recaptcha/api/siteverify",
+            "https://hcaptcha.com/siteverify",
             data={
-                "secret": settings.RECAPTCHA_SECRET_KEY,
+                "secret": settings.HCAPTCHA_SECRET_KEY,
                 "response": token,
             },
         )
@@ -97,8 +97,8 @@ class LoginWithRecaptchaRequest(BaseModel):
 
 @app.post("/auth/login-with-recaptcha")
 async def login_with_recaptcha(request: LoginWithRecaptchaRequest):
-    if not await verify_recaptcha_token(request.recaptcha_token):
-        raise HTTPException(status_code=400, detail="reCAPTCHA verification failed")
+    if not await verify_hcaptcha_token(request.recaptcha_token):
+        raise HTTPException(status_code=400, detail="hCaptcha verification failed")
 
     from .users import get_user_manager
     from .database import get_user_db
@@ -147,8 +147,8 @@ class RegisterWithRecaptchaRequest(BaseModel):
 
 @app.post("/auth/register-with-recaptcha")
 async def register_with_recaptcha(request: RegisterWithRecaptchaRequest):
-    if not await verify_recaptcha_token(request.recaptcha_token):
-        raise HTTPException(status_code=400, detail="reCAPTCHA verification failed")
+    if not await verify_hcaptcha_token(request.recaptcha_token):
+        raise HTTPException(status_code=400, detail="hCaptcha verification failed")
 
     from .users import get_user_manager
     from .database import get_user_db
