@@ -15,9 +15,18 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <script
-          src="https://www.google.com/recaptcha/api.js"
+          src="https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoad&render=explicit"
           async
           defer
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.onRecaptchaLoad = function() {
+                console.log('reCAPTCHA loaded');
+              };
+            `,
+          }}
         />
       </head>
       <body>{children}</body>

@@ -25,12 +25,26 @@ export default function RegisterPage() {
 
   useEffect(() => {
     const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '';
-    if (siteKey && window.grecaptcha) {
-      const widgetId = window.grecaptcha.render('recaptcha-register', {
-        sitekey: siteKey,
-        theme: 'light',
-      });
-      (window as any).__recaptchaRegisterWidgetId = widgetId;
+    const initRecaptcha = () => {
+      if (siteKey && window.grecaptcha && !window.grecaptcha.render) {
+        setTimeout(initRecaptcha, 100);
+        return;
+      }
+      if (siteKey && window.grecaptcha && window.grecaptcha.render) {
+        const container = document.getElementById('recaptcha-register');
+        if (container && !container.hasChildNodes()) {
+          const widgetId = window.grecaptcha.render('recaptcha-register', {
+            sitekey: siteKey,
+            theme: 'light',
+          });
+          (window as any).__recaptchaRegisterWidgetId = widgetId;
+        }
+      }
+    };
+    if (window.grecaptcha) {
+      initRecaptcha();
+    } else {
+      window.onload = initRecaptcha;
     }
   }, []);
 
