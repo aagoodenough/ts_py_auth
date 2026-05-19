@@ -14,7 +14,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+        <script 
+          src="https://js.hcaptcha.com/1/api.js" 
+          async 
+          defer
+          onLoad={() => console.log('hCaptcha loaded')}
+        ></script>
       </head>
       <body>{children}</body>
     </html>

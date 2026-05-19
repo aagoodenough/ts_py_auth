@@ -15,13 +15,16 @@ export default function RegisterPage() {
   const [hcaptchaReady, setHcaptchaReady] = useState(false);
 
   useEffect(() => {
-    const checkHcaptcha = setInterval(() => {
-      if ((window as any).hcaptcha) {
-        setHcaptchaReady(true);
-        clearInterval(checkHcaptcha);
-      }
-    }, 100);
-    return () => clearInterval(checkHcaptcha);
+    if (!(window as any).hcaptcha) {
+      const script = document.createElement('script');
+      script.src = 'https://js.hcaptcha.com/1/api.js';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => setHcaptchaReady(true);
+      document.head.appendChild(script);
+    } else {
+      setHcaptchaReady(true);
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

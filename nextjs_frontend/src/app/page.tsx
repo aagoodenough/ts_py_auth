@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI } from '@/lib/api';
@@ -11,6 +11,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!(window as any).hcaptcha) {
+      const script = document.createElement('script');
+      script.src = 'https://js.hcaptcha.com/1/api.js';
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
