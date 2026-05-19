@@ -2,7 +2,7 @@ from typing import Set
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# aaa
+
 class Settings(BaseSettings):
     OPENAPI_URL: str = "/openapi.json"
 

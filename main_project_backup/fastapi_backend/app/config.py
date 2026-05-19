@@ -2,7 +2,7 @@ from typing import Set
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# aaa
+
 class Settings(BaseSettings):
     OPENAPI_URL: str = "/openapi.json"
 
@@ -42,8 +42,6 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str | None = None
     GITHUB_CLIENT_ID: str | None = None
     GITHUB_CLIENT_SECRET: str | None = None
-
-    RECAPTCHA_SECRET_KEY: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
