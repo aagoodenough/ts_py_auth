@@ -13,12 +13,16 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    console.log('Login page loading, checking hCaptcha...');
     if (!(window as any).hcaptcha) {
+      console.log('Loading hCaptcha script...');
       const script = document.createElement('script');
       script.src = 'https://js.hcaptcha.com/1/api.js';
       script.async = true;
       script.defer = true;
       document.head.appendChild(script);
+    } else {
+      console.log('hCaptcha already loaded');
     }
   }, []);
 

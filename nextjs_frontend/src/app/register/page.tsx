@@ -15,14 +15,20 @@ export default function RegisterPage() {
   const [hcaptchaReady, setHcaptchaReady] = useState(false);
 
   useEffect(() => {
+    console.log('Register page loading, checking hCaptcha...');
     if (!(window as any).hcaptcha) {
+      console.log('Loading hCaptcha script...');
       const script = document.createElement('script');
       script.src = 'https://js.hcaptcha.com/1/api.js';
       script.async = true;
       script.defer = true;
-      script.onload = () => setHcaptchaReady(true);
+      script.onload = () => {
+        console.log('hCaptcha script loaded');
+        setHcaptchaReady(true);
+      };
       document.head.appendChild(script);
     } else {
+      console.log('hCaptcha already loaded');
       setHcaptchaReady(true);
     }
   }, []);
